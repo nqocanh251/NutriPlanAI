@@ -1,6 +1,7 @@
-
-pickle
-pathlib
-matplotlib
-pandas
 streamlit
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+joblib
