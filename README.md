@@ -5,10 +5,10 @@
 Đây là đồ án xây dựng ứng dụng web bằng **Streamlit** để hỗ trợ:
 
 - phân loại chế độ ăn phù hợp cho người dùng dựa trên **BMI**, **tuổi**, **tiểu đường** và **cao huyết áp**
-- gợi ý danh sách thực phẩm/món ăn phù hợp sau khi mô hình dự đoán
+- sinh **thực đơn gợi ý theo bữa sáng, trưa, tối, bữa phụ** sau khi mô hình dự đoán
 - trực quan hóa dữ liệu và đánh giá hiệu năng mô hình ngay trên giao diện web
 
-Ứng dụng sử dụng mô hình **Random Forest Classifier** cho bài toán phân loại và kết hợp thêm **rule-based filtering** để gợi ý thực phẩm từ cơ sở dữ liệu thực phẩm.
+Ứng dụng sử dụng mô hình **Random Forest Classifier** cho bài toán phân loại và kết hợp thêm **rule-based filtering** để sinh thực đơn từ cơ sở dữ liệu thực phẩm USDA.
 
 ## Tên đề tài
 
@@ -20,7 +20,7 @@
 - Huấn luyện mô hình Random Forest để phân loại người dùng vào nhóm chế độ ăn phù hợp.
 - Hiển thị các chỉ số đánh giá như `Accuracy`, `F1-score`, `Confusion Matrix`, `Feature Importance`.
 - Xây dựng giao diện Streamlit trực quan, dễ thao tác và hỗ trợ nhập liệu trực tiếp.
-- Kết hợp dữ liệu thực phẩm để gợi ý món ăn sau khi dự đoán.
+- Kết hợp dữ liệu thực phẩm để sinh thực đơn theo từng bữa sau khi dự đoán.
 
 ## Công nghệ sử dụng
 
@@ -78,13 +78,15 @@ Nguồn thực phẩm hiện tại được tổ chức theo dạng dữ liệu 
 
 - `food.csv`
 - `food_category.csv`
+- `foundation_food.csv`
+- `nutrient.csv`
+- `food_nutrient.csv`
 
-Sau đó ánh xạ các nhóm thực phẩm thành các nhóm gợi ý (`C_Type`) để phục vụ lọc món ăn sau dự đoán.
+Sau đó hệ thống chuẩn hóa dữ liệu dinh dưỡng, gom nhóm thực phẩm và dùng luật lọc để chọn nguyên liệu phù hợp cho từng nhóm chế độ ăn.
 
 Lưu ý:
-
-- Ứng dụng hiện chỉ đọc **5.000 dòng đầu** của `food.csv` để tối ưu tốc độ.
-- Phần gợi ý món ăn đang là **rule-based mapping** từ nhóm thực phẩm sang chế độ ăn, chưa phải hệ thống sinh thực đơn hoàn chỉnh sáng - trưa - tối.
+- Ứng dụng sử dụng dữ liệu USDA Foundation Foods đã được làm sạch để phục vụ sinh thực đơn.
+- Phần thực đơn được tạo theo hướng **rule-based** từ nhóm thực phẩm và chỉ số dinh dưỡng, sau đó hiển thị theo từng bữa ăn.
 
 ## Pipeline xử lý
 
@@ -112,6 +114,7 @@ Script `scripts/train_model.py` thực hiện:
   - `StandardScaler` cho `Age`, `BMI`
   - `OneHotEncoder` cho `Diabetes`, `Hypertension`
 - chia train/test theo `stratify`
+- xử lý lệch lớp bằng `class_weight="balanced_subsample"`
 - huấn luyện `RandomForestClassifier`
 - lưu mô hình và metrics vào thư mục `models/`
 
@@ -119,12 +122,13 @@ Script `scripts/train_model.py` thực hiện:
 
 Trong `app.py`, sau khi mô hình dự đoán nhãn chế độ ăn:
 
-- hệ thống lọc dữ liệu thực phẩm theo nhóm `C_Type`
+- hệ thống lọc dữ liệu thực phẩm theo nhóm dinh dưỡng và ngưỡng phù hợp với từng lớp dự đoán
 - cho phép chọn ưu tiên:
   - `Tất cả`
   - `Món chay`
   - `Món không chay`
-- lấy ngẫu nhiên một số gợi ý để hiển thị
+- sinh thực đơn gồm `Bữa sáng`, `Bữa trưa`, `Bữa tối`, `Bữa phụ`
+- hiển thị ảnh minh họa, dưỡng chất theo bữa và tổng dưỡng chất trong ngày
 
 ## Giao diện ứng dụng
 
@@ -137,6 +141,8 @@ Trong `app.py`, sau khi mô hình dự đoán nhãn chế độ ăn:
 - xem trước dữ liệu
 - biểu đồ phân bố nhãn
 - biểu đồ phân bố BMI theo nhóm chế độ ăn
+- biểu đồ tỷ lệ bệnh lý theo nhóm
+- biểu đồ phân bố nhóm thực phẩm USDA
 
 ### 2. Triển khai mô hình
 
@@ -145,7 +151,10 @@ Trong `app.py`, sau khi mô hình dự đoán nhãn chế độ ăn:
 - tính BMI tự động
 - dự đoán nhãn chế độ ăn
 - hiển thị xác suất dự đoán
-- gợi ý món ăn phù hợp
+- hiển thị thực đơn gợi ý theo từng bữa
+- hiển thị ảnh minh họa món ăn
+- biểu đồ donut tỷ lệ năng lượng theo bữa
+- biểu đồ tổng dưỡng chất của thực đơn
 
 ### 3. Đánh giá & Hiệu năng
 
@@ -154,6 +163,8 @@ Trong `app.py`, sau khi mô hình dự đoán nhãn chế độ ăn:
 - `Confusion Matrix`
 - `Feature Importance`
 - `Classification Report`
+- biểu đồ chất lượng theo từng lớp
+- biểu đồ các cặp nhầm lẫn xuất hiện nhiều nhất
 
 ## Kết quả hiện tại
 
@@ -171,7 +182,6 @@ File `models/metrics.json`:
 ```bash
 pip install -r requirements.txt
 ```
-
 ### 2. Sinh lại dữ liệu bệnh nhân
 
 ```bash
@@ -210,18 +220,19 @@ streamlit run app.py
 - Có pipeline ML đầy đủ từ dữ liệu -> huấn luyện -> đánh giá -> giao diện web
 - Giao diện Streamlit đã được thiết kế lại theo hướng hiện đại, trực quan
 - Có mô hình đóng gói sẵn trong `models/model.pkl`
-- Có thể mở rộng thêm dữ liệu thực phẩm hoặc logic thực đơn trong tương lai
+- Có xử lý lệch lớp ở mức mô hình bằng `class_weight` và chia tập theo `stratify`
+- Có thực đơn gợi ý theo từng bữa, biểu đồ trực quan và ảnh minh họa
 
 ## Hạn chế hiện tại
 
 - Dữ liệu bệnh nhân là **synthetic data**, chưa phải dữ liệu lâm sàng thực tế
-- Gợi ý thực phẩm hiện tại mới là **lọc theo nhóm**, chưa sinh thực đơn hoàn chỉnh theo bữa
-- Phần ánh xạ từ dữ liệu USDA sang nhóm `C_Type` là ánh xạ thủ công để phục vụ demo
+- Thực đơn hiện được sinh theo luật từ dữ liệu USDA, chưa phải thực đơn do chuyên gia dinh dưỡng xây dựng
+- Tên thực phẩm trong USDA chủ yếu là tiếng Anh nên phần mô tả món vẫn mang tính kỹ thuật
 - Ứng dụng hiện ưu tiên tính đơn giản và dễ trình bày trong đồ án
 
 ## Hướng phát triển
 
-- Chuyển từ gợi ý thực phẩm sang thực đơn sáng - trưa - tối
+- Việt hóa sâu hơn tên thực phẩm hoặc ánh xạ sang tên món quen thuộc
 - Tăng chất lượng dữ liệu đầu vào bằng dữ liệu thật hoặc dataset chuẩn hơn
 - Mở rộng logic dinh dưỡng theo từng bệnh lý cụ thể
 - Triển khai ứng dụng lên Streamlit Community Cloud hoặc Hugging Face Spaces
