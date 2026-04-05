@@ -1,6 +1,6 @@
-streamlit
-pandas
-numpy
+base64
+pickle
+pathlib
 matplotlib
-scikit-learn
-joblib
+pandas
+streamlit
